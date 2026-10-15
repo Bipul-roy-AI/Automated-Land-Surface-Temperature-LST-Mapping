@@ -256,3 +256,65 @@ The 15 tests use realistic Landsat 8 DN values (~30,000, as in real Collection 2
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+
+---
+
+## Optional research workflows (development branch)
+
+The default single-scene physical retrieval is unchanged. New research features are
+explicitly opt-in, because statistical downscaling is not directly measured LST.
+
+**Spatially evaluated LST downscaling** (inspired by the workflows in
+pansism/downscale-satelliteLST and wqlin08/LST-Downscaling-Project):
+
+```bash
+pip install scikit-learn scipy joblib
+python lst_universal_research_safe.py research downscale \
+  --lst landsat_lst_c.tif \
+  --coarse coarse_ndvi.tif coarse_ndbi.tif coarse_mndwi.tif \
+  --fine sentinel_ndvi.tif sentinel_ndbi.tif sentinel_mndwi.tif \
+  --model rf --block-size 20 --output modelled_fine_lst_c.tif
+```
+
+Supported models: `ridge`, `rf`, `boost` (histogram gradient boosting), and
+`stack` (Ridge and Random Forest ensemble). `--residual-correction` is
+available but off by default. Predictors must describe compatible surface variables,
+use matching band order, units and acquisition conditions; inputs should be
+preprocessed, spatially co-registered and quality masked. Coarse and fine predictor
+rasters must use comparable physical definitions. A JSON report records spatial-block
+holdout metrics, but **does not establish fine-resolution accuracy**. Use independent
+fine-resolution thermal measurements for that claim. No cloud filling is inferred to
+be valid and no resolution gain is claimed as a thermal sensor measurement.
+
+**Multi-date temporal analysis** (inspired by leonsnill/lst_landsat):
+
+```bash
+python lst_universal_research_safe.py research trend \
+  --rasters lst_2021.tif lst_2022.tif lst_2023.tif \
+  --dates 2021-04-01 2022-04-01 2023-04-01 \
+  --output-dir trends
+```
+
+Outputs: mean LST (Celsius), valid observation count, Theil-Sen slope
+(Celsius/year). All inputs must have compatible units, QA screening,
+acquisition season and overpass time; results are descriptive, not
+a significance test. Trend slopes calculated from seasonal mixtures may
+be misleading. The code uses the first input grid and aligns other scenes
+using nearest-neighbour resampling.
+
+**Stricter safeguards:** positive odd in-situ windows, rejection of
+explicit air-temperature reference data for direct LST validation,
+emissivity range checks, and nonzero return code when a batch only partially
+succeeds. Water-vapour values above the supported single-channel
+range now require explicit `--allow-wv-extrapolation`.
+
+**Scientific scope:** satellite LST retrieval, statistical downscaling, and
+temporal trend estimation are separate products. The new modules are
+research prototypes pending independent quantitative benchmarking.
+
+**Acknowledgements:** Workflow concepts were informed by
+[pansism/downscale-satelliteLST](https://github.com/pansism/downscale-satelliteLST),
+[leonsnill/lst_landsat](https://github.com/leonsnill/lst_landsat),
+and [wqlin08/LST-Downscaling-Project](https://github.com/wqlin08/LST-Downscaling-Project).
+The optional module is a new implementation rather than copied upstream code.
