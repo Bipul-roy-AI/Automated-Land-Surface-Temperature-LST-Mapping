@@ -119,23 +119,12 @@ python lst_universal_research_safe.py --help
 python lst_universal_research_safe.py research --help
 ```
 
-## 4. Visual examples
+## 4. Example LST output
 
-These are **custom synthetic illustrations**, not screenshots of completed satellite processing runs or independently validated LST outputs. They show the *types* of maps the tool can produce.
+A real Landsat 8 Collection 2 Level-2 surface-temperature output from Chattogram, Bangladesh, generated with the tool. The example map includes the LST spatial distribution and pixel-temperature histogram.
 
-**LST map**
+**Image awaiting upload:** `screenshots/LST_LANDSAT_L2ST_LC08_L2SP_136045_20260119_02_T1_ST_B10.png`
 
-![Synthetic example of an LST map](screenshots/demo_lst.svg)
-
-**Downscaled LST prediction**
-
-![Synthetic example of a downscaled LST prediction](screenshots/demo_downscaling.svg)
-
-**Temporal trend analysis**
-
-![Synthetic example of LST trend analysis](screenshots/demo_trends.svg)
-
-To create actual result screenshots, process your own quality-screened satellite scenes using the commands above.
 
 ---
 
