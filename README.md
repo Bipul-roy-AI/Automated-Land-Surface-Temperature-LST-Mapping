@@ -123,7 +123,13 @@ python lst_universal_research_safe.py research --help
 
 A real Landsat 8 Collection 2 Level-2 surface-temperature output from Chattogram, Bangladesh, generated with the tool. The example map includes the LST spatial distribution and pixel-temperature histogram.
 
+**Chattogram — Landsat 8 Level-2 LST**
+
 ![Landsat 8 Level-2 LST output for Chattogram with temperature histogram](screenshots/LST_LANDSAT_L2ST_LC08_L2SP_136045_20260119_02_T1_ST_B10.png)
+
+**Dhaka District — Landsat 8 Level-2 LST (11 February 2026)**
+
+![Dhaka District LST map and cloud-screened temperature histogram](screenshots/dhaka_district_lst_map_and_histogram.png)
 
 
 ---
