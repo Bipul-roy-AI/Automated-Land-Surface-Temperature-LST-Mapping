@@ -288,6 +288,10 @@ def get_emissivity(src, args, mtl: Optional[dict], red, nir, water: Optional[np.
         if not (0 < eps <= 1):
             raise ValueError(f"Invalid emissivity {eps}; must be in (0, 1].")
         eps10 = eps11 = eps
+    for name, e in (("band 10", eps10), ("band 11", eps11)):
+        v = np.asarray(e, dtype=np.float64)
+        if np.any(np.isfinite(v) & ((v <= 0) | (v > 1))):
+            raise ValueError(f"Invalid emissivity values for {name}; require 0 < e <= 1")
     if water is not None and args.water_emissivity is not None:
         we = args.water_emissivity
         if not (0 < we <= 1):
@@ -376,11 +380,16 @@ def get_water_vapor(src, args):
     else:
         w = ask("Column water vapour in g/cm2 (ERA5 kg/m2 / 10): ", float)
     wmax = float(np.nanmax(w))
+    if not np.all(np.isfinite(w)):
+        raise ValueError("Water vapour contains missing or nonfinite values.")
     if float(np.nanmin(w)) < 0:
         raise ValueError("Water vapour must be >= 0 g/cm2.")
     if wmax > WV_TABULATED_MAX:
-        logger.warning("Water vapour up to %.2f g/cm2: the published SC atmospheric functions are "
-                       "tabulated only up to %.1f g/cm2, so this extrapolates.", wmax, WV_TABULATED_MAX)
+        if not args.allow_wv_extrapolation:
+            raise ValueError(f"Water vapour {wmax:.2f} g/cm2 exceeds the documented SC range "
+                             f"({WV_TABULATED_MAX:.1f}); use --allow-wv-extrapolation "
+                             "only with independent validation.")
+        logger.warning("EXTRAPOLATING atmospheric functions beyond %.1f g/cm2", WV_TABULATED_MAX)
     return w
 
 
@@ -512,7 +521,9 @@ def validate_insitu(lst: np.ndarray, ref_src, csv_path: Path, window: int, out_c
     lats = [float(r[cols["lat"]]) for r in rows]
     obs = [float(r[cols["temp_c"]]) for r in rows]
     xs, ys = warp_transform("EPSG:4326", ref_src.crs, lons, lats)
-    half = max(window, 1) // 2
+    if window < 1 or window % 2 != 1:
+        raise ValueError("--insitu-window must be a positive odd integer.")
+    half = window // 2
     h, w = lst.shape
     kept = []
     for lon, lat, o, x, y in zip(lons, lats, obs, xs, ys):
@@ -799,7 +810,7 @@ def run_batch(args) -> int:
                     csv_path=csv_path)
         ok += r is not None
     logger.info("Batch finished: %d/%d scenes succeeded. Output: %s", ok, len(jobs), out_dir)
-    return 0 if ok else 1
+    return 0 if ok == len(jobs) else 1
 
 
 # ---------------------------------------------------------------------------
@@ -836,6 +847,8 @@ Examples:
   python lst_universal_research_safe.py --batch ./scenes --atmo sc --water-vapor 3.2
 """)
     p.add_argument("--input", "-i", type=Path, help="Thermal GeoTIFF")
+    p.add_argument("--insitu-variable", choices=["surface", "air"], default="surface",
+                   help="Station temperature type; air observations are rejected for direct validation")
     p.add_argument("--batch", "-b", type=Path, help="Folder of scenes (see examples)")
     p.add_argument("--sensor", choices=list(SENSORS), help="Force sensor (skip auto-detect)")
     p.add_argument("--mtl", type=Path, help="Landsat *_MTL.txt (single-file mode)")
@@ -855,6 +868,8 @@ Examples:
                         "vapour is given, else none)")
     a.add_argument("--water-vapor", type=float, help="Column water vapour, g/cm2")
     a.add_argument("--water-vapor-raster", type=Path, help="Water vapour raster, g/cm2")
+    a.add_argument("--allow-wv-extrapolation", action="store_true",
+                   help="Explicitly allow extrapolation beyond atmospheric-function calibration range")
     a.add_argument("--b11", type=Path, help="Band 11 GeoTIFF (for --atmo sw)")
     q = p.add_argument_group("masking")
     q.add_argument("--qa", type=Path, help="Landsat *_QA_PIXEL.TIF: mask cloud, shadow, cirrus, fill")
@@ -890,9 +905,15 @@ Examples:
 
 
 def main(argv: Optional[list[str]] = None) -> int:
+    actual_argv = list(sys.argv[1:] if argv is None else argv)
+    if actual_argv and actual_argv[0] == "research":
+        from lst_research_extensions import main as research_main
+        return research_main(actual_argv[1:])
     parser = build_parser()
     args = parser.parse_args(argv)
     setup_logging(args.verbose, args.quiet)
+    if args.insitu_csv and args.insitu_variable != "surface":
+        parser.error("Air temperature is not a direct LST validation reference; use radiometric surface temperature.")
 
     if args.batch is not None:
         args.non_interactive = True          # never prompt in batch mode
