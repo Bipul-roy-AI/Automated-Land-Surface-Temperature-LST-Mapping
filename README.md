@@ -119,27 +119,23 @@ python lst_universal_research_safe.py --help
 python lst_universal_research_safe.py research --help
 ```
 
-## 4. Screenshots
+## 4. Visual examples
 
-The following screenshots are included in the repository and show previous example runs of the standard workflows. They **do not demonstrate that the new experimental research modules have been benchmarked**.
+These are **custom synthetic illustrations**, not screenshots of completed satellite processing runs or independently validated LST outputs. They show the *types* of maps the tool can produce.
 
-**Single-channel LST map**
+**LST map**
 
-![Example single-channel LST map](screenshots/screenshot_lst_sc.png)
+![Synthetic example of an LST map](screenshots/demo_lst.svg)
 
-**Basic LST map**
+**Downscaled LST prediction**
 
-![Example basic LST map](screenshots/screenshot_lst_basic.png)
+![Synthetic example of a downscaled LST prediction](screenshots/demo_downscaling.svg)
 
-**MODIS LST map**
+**Temporal trend analysis**
 
-![Example MODIS LST map](screenshots/screenshot_lst_modis.png)
+![Synthetic example of LST trend analysis](screenshots/demo_trends.svg)
 
-**Example console runs**
-
-| Basic retrieval | Single-channel correction | MODIS |
-|---|---|---|
-| ![Basic run](screenshots/screenshot_run1_basic.png) | ![Single-channel run](screenshots/screenshot_run2_sc.png) | ![MODIS run](screenshots/screenshot_run3_modis.png) |
+To create actual result screenshots, process your own quality-screened satellite scenes using the commands above.
 
 ---
 
